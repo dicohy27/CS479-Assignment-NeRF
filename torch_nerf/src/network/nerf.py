@@ -35,14 +35,42 @@ class NeRF(nn.Module):
         super().__init__()
 
         # TODO
-        raise NotImplementedError("Task 1")
+        # raise NotImplementedError("Task 1")
+        self.first_layer = nn.Sequential(
+            nn.Linear(pos_dim, feat_dim),
+            nn.ReLU(),
+            nn.Linear(feat_dim, feat_dim),
+            nn.ReLU(),
+            nn.Linear(feat_dim, feat_dim),
+            nn.ReLU(),
+            nn.Linear(feat_dim, feat_dim),
+            nn.ReLU(),
+            nn.Linear(feat_dim, feat_dim),
+            nn.ReLU(),
+        )
+        self.second_layer = nn.Sequential(
+            nn.Linear(pos_dim + feat_dim),
+            nn.ReLU(),
+            nn.Linear(feat_dim, feat_dim),
+            nn.ReLU(),
+            nn.Linear(feat_dim, feat_dim),
+            nn.ReLU(),
+            nn.Linear(feat_dim, feat_dim + 1),
+        )
+        self.density_layer = nn.Sequential(
+            nn.ReLU(),
+        )
+        self.color_layer = nn.Sequential(
+            nn.Linear(feat_dim + view_dir_dim, feat_dim // 2),
+            nn.sigmoid(),
+        )
 
     @jaxtyped
     @typechecked
     def forward(
         self,
-        pos: Float[torch.Tensor, "num_sample pos_dim"],
-        view_dir: Float[torch.Tensor, "num_sample view_dir_dim"],
+        pos: Float[torch.Tensor, "num_sample pos_dim"], #60
+        view_dir: Float[torch.Tensor, "num_sample view_dir_dim"],   #24
     ) -> Tuple[Float[torch.Tensor, "num_sample 1"], Float[torch.Tensor, "num_sample 3"]]:
         """
         Predicts color and density.
@@ -60,4 +88,10 @@ class NeRF(nn.Module):
         """
 
         # TODO
-        raise NotImplementedError("Task 1")
+        # raise NotImplementedError("Task 1")
+        feat = self.first_layer(pos)
+        feat = torch.cat([pos, feat], dim=-1)
+        feat = self.second_layer(feat)
+        sigma = self.density_layer(feat[0])
+        radiance = self.color_layer(torch.cat([feat[1:], view_dir], dim=-1))
+        return sigma, radiance
