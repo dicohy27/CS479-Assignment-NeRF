@@ -49,7 +49,7 @@ class NeRF(nn.Module):
             nn.ReLU(),
         )
         self.second_layer = nn.Sequential(
-            nn.Linear(pos_dim + feat_dim),
+            nn.Linear(pos_dim + feat_dim,feat_dim),
             nn.ReLU(),
             nn.Linear(feat_dim, feat_dim),
             nn.ReLU(),
@@ -62,7 +62,9 @@ class NeRF(nn.Module):
         )
         self.color_layer = nn.Sequential(
             nn.Linear(feat_dim + view_dir_dim, feat_dim // 2),
-            nn.sigmoid(),
+            nn.ReLU(),
+            nn.Linear(feat_dim//2, 3),
+            nn.Sigmoid(),
         )
 
     @jaxtyped
@@ -92,6 +94,6 @@ class NeRF(nn.Module):
         feat = self.first_layer(pos)
         feat = torch.cat([pos, feat], dim=-1)
         feat = self.second_layer(feat)
-        sigma = self.density_layer(feat[0])
-        radiance = self.color_layer(torch.cat([feat[1:], view_dir], dim=-1))
+        sigma = self.density_layer(feat[:,0:1])
+        radiance = self.color_layer(torch.cat([feat[:,1:], view_dir], dim=-1))
         return sigma, radiance

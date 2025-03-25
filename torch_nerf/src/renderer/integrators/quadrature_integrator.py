@@ -45,7 +45,7 @@ class QuadratureIntegrator(IntegratorBase):
         # HINT: Look up the documentation of 'torch.cumsum'.
         # raise NotImplementedError("Task 3")
         cumsum = torch.cumsum(sigma * delta, dim=-1)
-        cumsum_with_zero = torch.cat([torch.zeros_like(cumsum[:, :1]), cumsum], dim=-1)
+        cumsum_with_zero = torch.cat([torch.zeros_like(cumsum[:, :1]), cumsum[:,:-1]], dim=-1)
         weights = (1 - torch.exp(-sigma * delta)) * torch.exp(-cumsum_with_zero)
         rgbs = torch.sum(weights[:, :, None] * radiance, dim=-2)
         return rgbs, weights
